@@ -1,6 +1,7 @@
 import {produits} from "../Utils/db/Produits.ts";
-import {useState} from "react";
-import type {Produit, ProduitWishList} from "../Utils/types/Produit.ts";
+import {useMemo, useState} from "react";
+import type {Category, Produit, ProduitWishList} from "../Utils/types/Produit.ts";
+import ProductCard from "../components/ProductCard.tsx";
 
 const Boutique = () => {
     const [products] = useState<Produit[]>(produits);
@@ -17,6 +18,22 @@ const Boutique = () => {
         console.log(wishList)
     }
 
+    const removeFromWish = (produit: ProduitWishList) => {
+        setWishList(wishList.filter((wish) => wish.identifiant !== produit.identifiant));
+    }
+
+    const totalWishList = useMemo(() => {
+        return wishList.reduce((sum, product) => sum + product.price, 0)
+    }, [wishList]);
+
+    // ---------- Filtre par catégorie
+    const [selectedCat, setSelectedCat] = useState<Category | 'all'>('all');
+
+    const filteredProducts = useMemo(() => {
+        if(selectedCat === 'all') return products;
+        return products.filter((p) => p.category === selectedCat);
+    }, [products, selectedCat])
+
 
     return (
         <>
@@ -24,26 +41,30 @@ const Boutique = () => {
 
             <section>
                 <h2>Noël en Folie</h2>
+                <p>
+                    <button onClick={() => setSelectedCat("all")}>All</button>
+                    <button onClick={() => setSelectedCat("vêtement")}>Vêtements</button>
+                    <button onClick={() => setSelectedCat("nourriture")}>Nourriture</button>
+                    <button onClick={() => setSelectedCat("tech")}>Tech</button>
+                </p>
 
                 <div className="grid">
-                    {products.map((p) => (
-                        <article key={"eshop" + p.id}>
-                            <h3>{p.name}</h3>
-                            <p>{p.price}€</p>
+                    {filteredProducts.map((p) => (
+                        <ProductCard key={"eshop" + p.id} product={p}>
                             <button onClick={() => {addToWish(p)}}>💜</button>
-                        </article>
+                        </ProductCard>
                     ))}
                 </div>
             </section>
 
             <section>
-                <h2>Wishlist</h2>
+                <h2>Wishlist ---- {totalWishList}€</h2>
 
                 <div className="grid">
                     {wishList.map((p) => (
-                        <article key={"wl" + p.identifiant}>
-                            <h3>{p.name} -- {p.price}€</h3>
-                        </article>
+                        <ProductCard key={"wl" + p.identifiant} product={p}>
+                            <button onClick={() => {removeFromWish(p)}}>🗑️</button>
+                        </ProductCard>
                     ))}
                 </div>
             </section>
